@@ -33,7 +33,6 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
     protected static final Logger logger = LoggerFactory.getLogger(AMVCDataSource.class);
 
     // - F I E L D - S E C T I O N
-    protected Boolean monitor = Boolean.TRUE; // Synchronization monitor to serialize model generation.
     /**
      * Unique DataSource string identifier to locate this instance on the <code>DataSourceManager</code> in case the
      * instances should be cached.
@@ -78,19 +77,11 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
      */
     private final List<ICollaboration> dataModelRoot = new ArrayList<>();
     private boolean dirty = false; // This is the flag for model changes.
-	/**
-	 * This field now contains the list of controllers resulting from the model list that is also stored into one array
-	 * and not inside a specific model node. This simplifies the code for Root nodes than now have disappeared.
-	 * This list is the list of controllers to be rendered on the data section list view.
-	 */
-	private List<IAndroidController> controllerDataSectionRoot = new ArrayList<>();
-	private final List<ICollaboration> headerModelRoot = new ArrayList<>();
-	/**
+    /**
      * This field now contains the list of controllers resulting from the model list that is also stored into one array
      * and not inside a specific model node. This simplifies the code for Root nodes than now have disappeared.
-     * This list is the list of controllers to be rendered on the header section list view.
      */
-    private List<IAndroidController> controllerHeaderSectionRoot = new ArrayList<>();
+    private List<IAndroidController> controllerRoot = new ArrayList<>();
 
     // - C O N S T R U C T O R - S E C T I O N
     public AMVCDataSource() {
@@ -111,11 +102,7 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
     }
 
     // - G E T T E R S   &   S E T T E R S
-    protected IControllerFactory getControllerFactory() {
-        return controllerFactory;
-    }
-
-    public boolean needsCaching() {
+    public boolean isCacheable() {
         return this.shouldBeCached;
     }
 
@@ -153,68 +140,41 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
     }
 
     /**
-     * The header contents are the list of different structures and the count for each one. To render the structure we also need the
-     * structure icon identifier that is also managed at the model level.
+     * This is the point where the adapter connects to get the contents for its list view. When the list view need any
+     * update it will call this point to get a fresh controller list. Most of the times that controller list is ready and
+     * just have to be collected from the full controller hierarchy with the collaboration to view procedure.
+     * <p>
+     * Any new controller or modified controller will not have a view and then when the contents are rendered will get its
+     * view representation created for visualization. For the other calls this just will collect into a new list a set of
+     * already ready controllers.
      *
-     * @return the model list to be rendered on the header section view.
+     * @return the list of controllers that collaborate to the view list this time.
      */
-    @Override
-    public List<IAndroidController> getHeaderSectionContents(){
-	    logger.info(">< [AMVCDataSource.getHeaderSectionContents]");
-        this.refreshHeaderSection();
-        final List<IAndroidController> controllers = new ArrayList<>();
-        for (IAndroidController controller : this.controllerHeaderSectionRoot) {
-            controller.collaborate2View(controllers);
-        }
-        return controllers;
-    }
-    /**
-	  * This is the point where the adapter connects to get the contents for its list view. When the list view need any
-	  * update it will call this point to get a fresh controller list. Most of the times that controller list is ready and
-	  * just have to be collected from the full controller hierarchy with the collaboration to view procedure.
-	  * <p>
-	  * Any new controller or modified controller will not have a view and then when the contents are rendered will get its
-	  * view representation created for visualization. For the other calls this just will collect into a new list a set of
-	  * already ready controllers.
-	  *
-	  * @return the list of controllers that collaborate to the view list this time.
-	  */
     public List<IAndroidController> getDataSectionContents() {
-	    logger.info(">< [AMVCDataSource.getDataSectionContents]");
         // Check if the model needs update (dirty flag) or we can jump directly to the view collaboration.
         if (this.isDirty()) {
-            this.refreshDataSection();
+            this.refreshChildren();
             this.cleanDirty();
         }
         final List<IAndroidController> controllers = new ArrayList<>();
-        for (IAndroidController controller : this.controllerDataSectionRoot) {
+        for (IAndroidController controller : this.controllerRoot) {
             controller.collaborate2View(controllers);
         }
         return controllers;
     }
 
-	private void refreshHeaderSection() {
-		this.controllerHeaderSectionRoot.clear();
-		synchronized (this.headerModelRoot) {
-			for (ICollaboration modelNode : this.headerModelRoot) {
-				final IAndroidController newController = this.controllerFactory.createController(modelNode);
-				newController.refreshChildren();
-				this.controllerHeaderSectionRoot.add(newController);
-			}
-		}
-	}
-	private void refreshDataSection() {
-		this.controllerDataSectionRoot.clear();
-		synchronized (this.dataModelRoot) {
-			for (ICollaboration modelNode : this.dataModelRoot) {
-				final IAndroidController newController = this.controllerFactory.createController(modelNode);
-				newController.refreshChildren();
-				this.controllerDataSectionRoot.add(newController);
-			}
-		}
-	}
+    private void refreshChildren() {
+        this.controllerRoot.clear();
+        synchronized (this.dataModelRoot) {
+            for (ICollaboration modelNode : this.dataModelRoot) {
+                final IAndroidController newController = this.controllerFactory.createController(modelNode);
+                newController.refreshChildren();
+                this.controllerRoot.add(newController);
+            }
+        }
+    }
 
-	/**
+    /**
      * This is the single way to add more content to the DataSource internal model representation. Encapsulating this
      * functionality on this method we make sure that the right events are generated and the model is properly updated and
      * the render process will work as expected.
@@ -226,19 +186,13 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
      * @param newModel a new node to be added to the contents of the root point of the model.
      * @return this IDataSource instance to allow flow coding.
      */
-	public IDataSource addModelContents(final ICollaboration newModel) {
-		logger.info(">< [AMVCDataSource.addModelContents]> Adding model: {}", newModel.getClass().getSimpleName());
-		this.dataModelRoot.add(newModel);
-		this.controllerDataSectionRoot.add(this.controllerFactory.createController(newModel));
-		this.dirty = true; // Signal the model change
-		return this;
-	}
-	public IDataSource addHeaderContents(final ICollaboration newModel) {
-		logger.info(">< [AMVCDataSource.addHeaderContents]> Adding model: {}", newModel.getClass().getSimpleName());
-		this.headerModelRoot.add(newModel);
-//		this.controllerHeaderSectionRoot.add(this.controllerFactory.createController(newModel));
-		return this;
-	}
+    public IDataSource addModelContents(final ICollaboration newModel) {
+        logger.info(">< [AMVCDataSource.addModelContents]> Adding model: {}", newModel.getClass().getSimpleName());
+        dataModelRoot.add(newModel);
+        controllerRoot.add(this.controllerFactory.createController(newModel));
+        this.dirty = true; // Signal the model change
+        return this;
+    }
 
     /**
      * Cleans the model and the corresponding controllers. Resets the data source to be empty.
@@ -247,7 +201,7 @@ public abstract class AMVCDataSource implements IDataSource, IEventEmitter {
      */
     public IDataSource cleanModel() {
         this.dataModelRoot.clear();
-        this.controllerDataSectionRoot.clear();
+        this.controllerRoot.clear();
         this.dirty = true; // Signal the model change
         return this;
     }
