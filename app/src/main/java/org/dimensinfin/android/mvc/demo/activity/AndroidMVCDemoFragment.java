@@ -98,7 +98,7 @@ final class DemoDataSource extends AMVCDataSource {
 	 */
 	public void collaborate2Model() {
 		AMVCDataSource.logger.info(">> [DemoDataSource.collaborate2Model]");
-		this.cleanModel(); // Clear the model before creating it again to remove duplicates.
+//		this.cleanModel(); // Clear the model before creating it again to remove duplicates.
 		// Check if we should use the cached version.
 //		if (!isCached()) {
 		if (getVariant() == AndroidMVCDemoActivity.EDemoVariants.NON_EXPANDABLE_SECTION.name()) {
