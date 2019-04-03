@@ -35,7 +35,7 @@ public abstract class AAndroidController<M extends ICollaboration> implements IA
 
 	// - F I E L D - S E C T I O N
 	/** Place to store the model handler delegate so the model class is automatically casted. */
-	private GenericController<M> delegatedController;
+	private ControllerAdapter<M> delegatedController;
 	/** List of children of the hierarchy. */
 	private List<IAndroidController> children = new ArrayList<>();
 	/** This field caches the factory that is set during the construction. */
@@ -47,7 +47,7 @@ public abstract class AAndroidController<M extends ICollaboration> implements IA
 	private IEventEmitter eventController = new EventEmitter();
 
 	// - C O N S T R U C T O R - S E C T I O N
-	public AAndroidController(@NonNull final GenericController<M> delegate, @NonNull final IControllerFactory factory) {
+	public AAndroidController(@NonNull final ControllerAdapter<M> delegate, @NonNull final IControllerFactory factory) {
 		Objects.requireNonNull(delegate);
 		Objects.requireNonNull(factory);
 		this.delegatedController = delegate;

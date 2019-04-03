@@ -14,7 +14,7 @@ import java.util.Objects;
  * @author Adam Antinoo
  */
 
-public class GenericController<M extends ICollaboration> implements IModelContainer<M>, Comparable<M> {
+public class ControllerAdapter<M extends ICollaboration> implements IModelContainer<M>, Comparable<M> {
 	// - F I E L D - S E C T I O N
 	/** Reference to the Model node. */
 	private final M model; // Holds the model node.
@@ -22,7 +22,7 @@ public class GenericController<M extends ICollaboration> implements IModelContai
 	private IEventEmitter eventController = new EventEmitter();
 
 	// - C O N S T R U C T O R - S E C T I O N
-	public GenericController(@NonNull final M model) {
+	public ControllerAdapter(@NonNull final M model) {
 		Objects.requireNonNull(model);
 		this.model = model;
 	}

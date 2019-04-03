@@ -24,7 +24,7 @@ public abstract class AbstractExpandableAndroidController<M extends IExpandable>
 	private ClickSupporter clickSupporter = new ClickSupporter(false);
 
 	// - C O N S T R U C T O R - S E C T I O N
-	public AbstractExpandableAndroidController(@NonNull final GenericController<M> delegate, @NonNull final IControllerFactory factory) {
+	public AbstractExpandableAndroidController(@NonNull final ControllerAdapter<M> delegate, @NonNull final IControllerFactory factory) {
 		super(delegate, factory);
 	}
 

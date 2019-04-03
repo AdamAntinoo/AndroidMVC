@@ -5,13 +5,13 @@ import android.support.annotation.NonNull;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.dimensinfin.android.mvc.controller.AAndroidController;
-import org.dimensinfin.android.mvc.controller.GenericController;
+import org.dimensinfin.android.mvc.controller.ControllerAdapter;
 import org.dimensinfin.android.mvc.interfaces.IControllerFactory;
 import org.dimensinfin.android.mvc.interfaces.IRender;
 
 public class TestController extends AAndroidController {
 	// - F I E L D - S E C T I O N
-//	private GenericController<EmptyNode> delegatedController;
+//	private ControllerAdapter<EmptyNode> delegatedController;
 	private boolean visible = true;
 
 	// - C O N S T R U C T O R - S E C T I O N
@@ -20,7 +20,7 @@ public class TestController extends AAndroidController {
 //	}
 
 	public TestController(@NonNull final EmptyNode model, @NonNull final IControllerFactory factory) {
-		super(new GenericController<EmptyNode>(model), factory);
+		super(new ControllerAdapter<EmptyNode>(model), factory);
 		// Connect the delegate.
 //		this.delegatedController = ;
 	}
